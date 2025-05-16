@@ -15,34 +15,34 @@
     .grecaptcha-badge { visibility: hidden; }
   </style>
 </head>
-<body class="bg-white text-gray-800 min-h-screen flex flex-col items-center px-4 py-6">
+<body class="bg-[#f6f6f6] text-[#111] min-h-screen flex flex-col items-center px-4 py-6">
   <header class="w-full max-w-4xl flex flex-col items-center border-b pb-4 mb-6 text-center">
     <img src="logo.jpg" alt="TimeHeroes Logo" class="h-12 mb-2">
-    <h1 class="text-3xl font-bold text-green-700">Споделено пътуване</h1>
+    <h1 class="text-3xl font-bold text-[#6dbb2f]">Споделено пътуване</h1>
     <p class="text-sm text-gray-500 italic">Прави повече добро.</p>
   </header>
 
   <main class="w-full max-w-3xl space-y-8">
-    <section class="bg-gray-50 p-4 md:p-6 rounded-xl shadow">
-      <h2 class="text-xl font-semibold mb-4 text-green-700">Добави ново пътуване</h2>
+    <section class="bg-white p-4 md:p-6 rounded-xl shadow">
+      <h2 class="text-xl font-semibold mb-4 text-[#6dbb2f]">Добави ново пътуване</h2>
       <div class="space-y-4">
-        <input type="text" id="from" placeholder="Тръгвам от..." class="w-full p-3 border rounded" />
-        <input type="text" id="via" placeholder="Минавам през... (по желание)" class="w-full p-3 border rounded" />
-        <input type="text" id="to" placeholder="Стигам до..." class="w-full p-3 border rounded" />
-        <input type="datetime-local" id="datetime" class="w-full p-3 border rounded" />
-        <input type="number" id="capacity" placeholder="Капацитет (брой места)" class="w-full p-3 border rounded" />
-        <input type="text" id="contact" placeholder="Телефон за връзка" class="w-full p-3 border rounded" />
-        <button onclick="addTrip()" class="w-full bg-orange-500 text-white py-3 rounded hover:bg-orange-600 transition">➕ Добави</button>
+        <input type="text" id="from" placeholder="Тръгвам от..." class="w-full p-3 border border-gray-300 rounded" />
+        <input type="text" id="via" placeholder="Минавам през... (по желание)" class="w-full p-3 border border-gray-300 rounded" />
+        <input type="text" id="to" placeholder="Стигам до..." class="w-full p-3 border border-gray-300 rounded" />
+        <input type="datetime-local" id="datetime" class="w-full p-3 border border-gray-300 rounded" />
+        <input type="number" id="capacity" placeholder="Капацитет (брой места)" class="w-full p-3 border border-gray-300 rounded" />
+        <input type="text" id="contact" placeholder="Телефон за връзка" class="w-full p-3 border border-gray-300 rounded" />
+        <button onclick="addTrip()" class="w-full bg-[#6dbb2f] text-white py-3 rounded hover:bg-green-700 transition">➕ Добави</button>
         <p id="error" class="text-red-500 text-sm hidden">Моля, попълни всички задължителни полета.</p>
       </div>
     </section>
 
     <section>
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">📋 Налични пътувания</h2>
+      <h2 class="text-lg font-semibold text-[#333] mb-4">📋 Налични пътувания</h2>
       <div class="flex flex-col gap-2 md:flex-row md:gap-4 mb-4">
-        <input type="text" id="search" placeholder="Търси по дестинация..." class="w-full p-3 border rounded" oninput="renderTrips()">
-        <input type="date" id="filterDate" class="w-full p-3 border rounded" onchange="renderTrips()">
-        <input type="time" id="filterTime" class="w-full p-3 border rounded" onchange="renderTrips()">
+        <input type="text" id="search" placeholder="Търси по дестинация..." class="w-full p-3 border border-gray-300 rounded" oninput="renderTrips()">
+        <input type="date" id="filterDate" class="w-full p-3 border border-gray-300 rounded" onchange="renderTrips()">
+        <input type="time" id="filterTime" class="w-full p-3 border border-gray-300 rounded" onchange="renderTrips()">
       </div>
       <div id="trips" class="space-y-4"></div>
     </section>
@@ -85,7 +85,7 @@
 
       trips.forEach((trip, index) => {
         const tripHTML = `
-          <div class="p-4 bg-white border-l-4 border-green-600 shadow rounded">
+          <div class="p-4 bg-white border-l-4 border-[#6dbb2f] shadow rounded">
             <div class="flex flex-col gap-2">
               <p class="font-semibold">🕒 ${trip.datetime}</p>
               <p>🚗 <strong>Тръгва от:</strong> ${trip.from}</p>
@@ -93,9 +93,9 @@
               <p>🏁 <strong>Стига до:</strong> ${trip.to}</p>
               <p>👥 <strong>Капацитет:</strong> ${trip.capacity || 'Не е посочено'}</p>
               <p id="contact-${index}">
-                📞 <strong>Връзка:</strong> <button onclick="revealContact(${index})" class="text-blue-600 hover:underline">Покажи номер</button>
+                📞 <strong>Връзка:</strong> <button onclick="revealContact(${index})" class="text-[#6dbb2f] hover:underline">Покажи номер</button>
               </p>
-              <a href="https://www.google.com/maps/dir/${encodeURIComponent(trip.from)}/${encodeURIComponent(trip.to)}" target="_blank" class="text-blue-600 hover:underline">🗺️ Виж на карта</a>
+              <a href="https://www.google.com/maps/dir/${encodeURIComponent(trip.from)}/${encodeURIComponent(trip.to)}" target="_blank" class="text-[#6dbb2f] hover:underline">🗺️ Виж на карта</a>
             </div>
           </div>
         `;
