@@ -1,33 +1,36 @@
+
 <!DOCTYPE html>
 <html lang="bg">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Споделено пътуване в София</title>
+  <link rel="icon" type="image/png" href="favicon.ico">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     body {
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
+    .grecaptcha-badge { visibility: hidden; }
   </style>
 </head>
-<body class="bg-white text-gray-800 min-h-screen flex flex-col items-center p-6">
-  <header class="w-full max-w-4xl flex items-center justify-between border-b pb-4 mb-6">
-    <div class="flex items-center gap-4">
-      <img src="https://www.timeheroes.org/themes/timeheroes/assets/images/logo.svg" alt="TimeHeroes Logo" class="h-12">
-      <h1 class="text-3xl font-bold text-green-700">Споделено пътуване</h1>
-    </div>
+<body class="bg-white text-gray-800 min-h-screen flex flex-col items-center px-4 py-6">
+  <header class="w-full max-w-4xl flex flex-col items-center border-b pb-4 mb-6 text-center">
+    <img src="logo.jpg" alt="TimeHeroes Logo" class="h-12 mb-2">
+    <h1 class="text-3xl font-bold text-green-700">Споделено пътуване</h1>
     <p class="text-sm text-gray-500 italic">Прави повече добро.</p>
   </header>
 
   <main class="w-full max-w-3xl space-y-8">
-    <section class="bg-gray-50 p-6 rounded-xl shadow">
+    <section class="bg-gray-50 p-4 md:p-6 rounded-xl shadow">
       <h2 class="text-xl font-semibold mb-4 text-green-700">Добави ново пътуване</h2>
       <div class="space-y-4">
         <input type="text" id="from" placeholder="Тръгвам от..." class="w-full p-3 border rounded" />
         <input type="text" id="via" placeholder="Минавам през... (по желание)" class="w-full p-3 border rounded" />
         <input type="text" id="to" placeholder="Стигам до..." class="w-full p-3 border rounded" />
         <input type="datetime-local" id="datetime" class="w-full p-3 border rounded" />
+        <input type="number" id="capacity" placeholder="Капацитет (брой места)" class="w-full p-3 border rounded" />
         <input type="text" id="contact" placeholder="Телефон за връзка" class="w-full p-3 border rounded" />
         <button onclick="addTrip()" class="w-full bg-orange-500 text-white py-3 rounded hover:bg-orange-600 transition">➕ Добави</button>
         <p id="error" class="text-red-500 text-sm hidden">Моля, попълни всички задължителни полета.</p>
@@ -36,12 +39,26 @@
 
     <section>
       <h2 class="text-lg font-semibold text-gray-700 mb-4">📋 Налични пътувания</h2>
-      <input type="text" id="search" placeholder="Търси по дестинация..." class="w-full p-3 border rounded mb-4" oninput="renderTrips()">
+      <div class="flex flex-col gap-2 md:flex-row md:gap-4 mb-4">
+        <input type="text" id="search" placeholder="Търси по дестинация..." class="w-full p-3 border rounded" oninput="renderTrips()">
+        <input type="date" id="filterDate" class="w-full p-3 border rounded" onchange="renderTrips()">
+        <input type="time" id="filterTime" class="w-full p-3 border rounded" onchange="renderTrips()">
+      </div>
       <div id="trips" class="space-y-4"></div>
     </section>
+
+    <div id="captchaModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 px-4">
+      <div class="bg-white p-4 md:p-6 max-w-xs w-full rounded-lg shadow-xl text-center">
+        <p class="mb-4 font-semibold">Потвърди, че не си робот, за да покажем номера:</p>
+        <div class="g-recaptcha mb-4" data-sitekey="6LfcWz0rAAAAAGTKf7pw5bdGN-Kuq_g5mceKOxsO" data-callback="captchaVerified"></div>
+        <button onclick="closeCaptcha()" class="text-sm text-gray-500 hover:underline">Отказ</button>
+      </div>
+    </div>
   </main>
 
   <script>
+    let pendingContactIndex = null;
+
     function saveTrips(trips) {
       localStorage.setItem('trips', JSON.stringify(trips));
     }
@@ -53,9 +70,15 @@
 
     function renderTrips() {
       const filter = document.getElementById('search').value.toLowerCase();
-      const trips = loadTrips()
-        .filter(t => t.to.toLowerCase().includes(filter))
-        .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+      const dateFilter = document.getElementById('filterDate').value;
+      const timeFilter = document.getElementById('filterTime').value;
+
+      const trips = loadTrips().filter(t => {
+        const matchesDestination = t.to.toLowerCase().includes(filter);
+        const matchesDate = dateFilter ? t.datetime.startsWith(dateFilter) : true;
+        const matchesTime = timeFilter ? t.datetime.slice(11, 16) === timeFilter : true;
+        return matchesDestination && matchesDate && matchesTime;
+      }).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
       const tripsDiv = document.getElementById('trips');
       tripsDiv.innerHTML = '';
@@ -63,19 +86,16 @@
       trips.forEach((trip, index) => {
         const tripHTML = `
           <div class="p-4 bg-white border-l-4 border-green-600 shadow rounded">
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="font-semibold">🕒 ${trip.datetime}</p>
-                <p>🚗 <strong>Тръгва от:</strong> ${trip.from}</p>
-                <p>🛣️ <strong>Минава през:</strong> ${trip.via || 'няма'}</p>
-                <p>🏁 <strong>Стига до:</strong> ${trip.to}</p>
-                <p>📞 <strong>Връзка:</strong> ${trip.contact}</p>
-                <a href="https://www.google.com/maps/dir/${encodeURIComponent(trip.from)}/${encodeURIComponent(trip.to)}" target="_blank" class="text-blue-600 hover:underline">🗺️ Виж на карта</a>
-              </div>
-              <div class="flex flex-col items-end gap-2">
-                <button onclick="deleteTrip(${index})" class="text-red-500 hover:underline">❌</button>
-                <button onclick="shareTrip(${index})" class="text-blue-500 hover:underline">🔗 Сподели</button>
-              </div>
+            <div class="flex flex-col gap-2">
+              <p class="font-semibold">🕒 ${trip.datetime}</p>
+              <p>🚗 <strong>Тръгва от:</strong> ${trip.from}</p>
+              <p>🛣️ <strong>Минава през:</strong> ${trip.via || 'няма'}</p>
+              <p>🏁 <strong>Стига до:</strong> ${trip.to}</p>
+              <p>👥 <strong>Капацитет:</strong> ${trip.capacity || 'Не е посочено'}</p>
+              <p id="contact-${index}">
+                📞 <strong>Връзка:</strong> <button onclick="revealContact(${index})" class="text-blue-600 hover:underline">Покажи номер</button>
+              </p>
+              <a href="https://www.google.com/maps/dir/${encodeURIComponent(trip.from)}/${encodeURIComponent(trip.to)}" target="_blank" class="text-blue-600 hover:underline">🗺️ Виж на карта</a>
             </div>
           </div>
         `;
@@ -88,6 +108,7 @@
       const via = document.getElementById('via').value.trim();
       const to = document.getElementById('to').value.trim();
       const datetime = document.getElementById('datetime').value;
+      const capacity = document.getElementById('capacity').value;
       const contact = document.getElementById('contact').value.trim();
 
       if (!from || !to || !datetime || !contact) {
@@ -97,30 +118,33 @@
       document.getElementById('error').classList.add('hidden');
 
       const trips = loadTrips();
-      trips.push({ from, via, to, datetime, contact });
+      trips.push({ from, via, to, datetime, capacity, contact });
       saveTrips(trips);
 
       document.getElementById('from').value = '';
       document.getElementById('via').value = '';
       document.getElementById('to').value = '';
       document.getElementById('datetime').value = '';
+      document.getElementById('capacity').value = '';
       document.getElementById('contact').value = '';
 
       renderTrips();
     }
 
-    function deleteTrip(index) {
-      const trips = loadTrips();
-      trips.splice(index, 1);
-      saveTrips(trips);
-      renderTrips();
+    function revealContact(index) {
+      pendingContactIndex = index;
+      document.getElementById('captchaModal').classList.remove('hidden');
     }
 
-    function shareTrip(index) {
-      const trip = loadTrips()[index];
-      const text = `Споделено пътуване:\n\nТръгва от: ${trip.from}\nМинава през: ${trip.via || 'няма'}\nСтига до: ${trip.to}\nКога: ${trip.datetime}\nКонтакт: ${trip.contact}`;
-      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=https://www.google.com/maps/dir/${encodeURIComponent(trip.from)}/${encodeURIComponent(trip.to)}&quote=${encodeURIComponent(text)}`;
-      window.open(shareUrl, '_blank');
+    function captchaVerified() {
+      const contact = loadTrips()[pendingContactIndex].contact;
+      document.getElementById(`contact-${pendingContactIndex}`).innerHTML = `📞 <strong>Връзка:</strong> ${contact}`;
+      closeCaptcha();
+    }
+
+    function closeCaptcha() {
+      document.getElementById('captchaModal').classList.add('hidden');
+      grecaptcha.reset();
     }
 
     window.onload = renderTrips;
